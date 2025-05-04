@@ -67,8 +67,8 @@ class HomeFragment : Fragment() {
         }
 
         // Dialog anzeigen
-        AlertDialog.Builder(requireContext())
-            .setTitle(if (taskId != null) "Task bearbeiten" else "Task hinzufügen")
+        val builder = AlertDialog.Builder(requireContext())
+            .setTitle(if (taskId != null) "Task bearbeiten" else "Neuer Task")
             .setView(dialogView)
             .setPositiveButton("Speichern") { _, _ ->
                 val name = editTaskName.text.toString()
@@ -77,14 +77,24 @@ class HomeFragment : Fragment() {
                 for (i in 0 until checklistContainer.childCount) {
                     val itemLayout = checklistContainer.getChildAt(i) as LinearLayout
                     val checkBox = itemLayout.getChildAt(0) as CheckBox
-                    val editText = itemLayout.getChildAt(1) as EditText
-                    checklist.add(ChecklistItem(editText.text.toString(), checkBox.isChecked))
+                    val itemText = itemLayout.getChildAt(1) as CheckBox
+
+                    checklist.add(ChecklistItem(itemText.text.toString(), checkBox.isChecked))
                 }
 
                 saveTaskToFirestore(taskId, Task(name, checklist))
             }
             .setNegativeButton("Abbrechen", null)
-            .show()
+
+        // Nur beim Bearbeiten → Löschbutton zeigen
+        if (taskId != null) {
+            builder.setNeutralButton("Löschen") { _, _ ->
+                deleteTaskFromFirestore(taskId)
+            }
+        }
+
+        builder.show()
+
     }
 
     private fun createChecklistItemView(text: String, checked: Boolean): LinearLayout {
@@ -191,6 +201,28 @@ class HomeFragment : Fragment() {
         cardLayout.addView(title)
         binding.taskContainer.addView(cardLayout)
     }
+
+
+
+    private fun deleteTaskFromFirestore(taskId: String) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val db = FirebaseFirestore.getInstance()
+
+        db.collection("users")
+            .document(userId)
+            .collection("tasks")
+            .document(taskId)
+            .delete()
+            .addOnSuccessListener {
+                Toast.makeText(requireContext(), "Task gelöscht 🗑️", Toast.LENGTH_SHORT).show()
+                binding.taskContainer.removeAllViews()
+                loadTasks()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Fehler beim Löschen: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
 
 
     override fun onDestroyView() {
