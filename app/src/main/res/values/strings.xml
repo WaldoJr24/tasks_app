@@ -1,10 +1,7 @@
 <resources>
     <string name="app_name">tasks_app</string>
-    <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
 
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="previous">Previous</string>
 
     <!-- Strings used for auth fragment -->
     <string name="auth_headline">Tasks Anmeldung</string>
